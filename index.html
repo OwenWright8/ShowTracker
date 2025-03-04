@@ -115,7 +115,8 @@
         function addSeason(showIndex) {
             const episodeCount = parseInt(prompt("How many episodes are in this season?"), 10);
             if (!isNaN(episodeCount) && episodeCount > 0) {
-                shows[showIndex].seasons.push({ episodes: Array(episodeCount).fill({ watched: false }) });
+                const episodes = Array.from({ length: episodeCount }, () => ({ watched: false }));
+                shows[showIndex].seasons.push({ episodes });
                 saveShows();
                 renderShows();
             }
