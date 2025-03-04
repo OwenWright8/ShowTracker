@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            padding: 10px;
+            margin: 10px;
+            width: 60%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-primary { background: #007bff; }
+        .btn-secondary { background: #28a745; }
+        .show-card {
+            background: #fff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .season {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .episode {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .watched {
+            background: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Show Tracker</h1>
+        <input type="text" id="showName" placeholder="Enter show name">
+        <button class="btn-primary" onclick="addShow()">Add Show</button>
+        <div id="shows"></div>
+    </div>
+    
+    <script>
+        let shows = JSON.parse(localStorage.getItem("showTracker")) || [];
+        function saveShows() {
+            localStorage.setItem("showTracker", JSON.stringify(shows));
+        }
+        function renderShows() {
+            const showContainer = document.getElementById("shows");
+            showContainer.innerHTML = "";
+            shows.forEach((show, showIndex) => {
+                const showDiv = document.createElement("div");
+                showDiv.classList.add("show-card");
+                showDiv.innerHTML = `<h2>${show.name}</h2>
+                    <button class="btn-secondary" onclick="addSeason(${showIndex})">Add Season</button>`;
+                
+                show.seasons.forEach((season, seasonIndex) => {
+                    const seasonDiv = document.createElement("div");
+                    seasonDiv.classList.add("season");
+                    seasonDiv.innerHTML = `<h3>Season ${seasonIndex + 1}</h3>`;
+                    season.episodes.forEach((episode, episodeIndex) => {
+                        const episodeBtn = document.createElement("div");
+                        episodeBtn.classList.add("episode");
+                        if (episode.watched) episodeBtn.classList.add("watched");
+                        episodeBtn.innerText = `Ep ${episodeIndex + 1}`;
+                        episodeBtn.onclick = () => toggleEpisode(showIndex, seasonIndex, episodeIndex);
+                        seasonDiv.appendChild(episodeBtn);
+                    });
+                    showDiv.appendChild(seasonDiv);
+                });
+                showContainer.appendChild(showDiv);
+            });
+        }
+        function addShow() {
+            const showName = document.getElementById("showName").value.trim();
+            if (showName) {
+                shows.push({ name: showName, seasons: [] });
+                saveShows();
+                renderShows();
+                document.getElementById("showName").value = "";
+            }
+        }
+        function addSeason(showIndex) {
+            const episodeCount = parseInt(prompt("How many episodes are in this season?"), 10);
+            if (!isNaN(episodeCount) && episodeCount > 0) {
+                shows[showIndex].seasons.push({ episodes: Array(episodeCount).fill({ watched: false }) });
+                saveShows();
+                renderShows();
+            }
+        }
+        function toggleEpisode(showIndex, seasonIndex, episodeIndex) {
+            shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched = 
+                !shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched;
+            saveShows();
+            renderShows();
+        }
+        renderShows();
+    </script>
+</body>
+</html>
