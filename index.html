@@ -181,12 +181,12 @@
   
   <script>
     // --- AWS Amplify Configuration ---
-    // Replace with your actual S3 bucket details.
+    // Use your bucket name "show-tracker" and region "us-east-2"
     Amplify.configure({
       Storage: {
         AWSS3: {
-          bucket: "show-tracker",   // e.g., "my-show-tracker-bucket"
-          region: "us-east-2"    // e.g., "us-east-1"
+          bucket: "show-tracker",
+          region: "us-east-2"
         }
       }
     });
@@ -223,7 +223,7 @@
       })
       .catch(err => {
         console.error("Load error:", err);
-        renderShows(); // fallback to local data if cloud load fails
+        renderShows(); // Fallback to local data if cloud load fails
       });
     }
     
@@ -318,9 +318,11 @@
     function openShowPopup() {
       document.getElementById("showPopup").style.display = "block";
     }
+    
     function closeShowPopup() {
       document.getElementById("showPopup").style.display = "none";
     }
+    
     function addShow() {
       const name = document.getElementById("popupShowName").value.trim();
       if (name) {
@@ -336,9 +338,11 @@
       currentShowIndexForSeason = showIndex;
       document.getElementById("seasonPopup").style.display = "block";
     }
+    
     function closeSeasonPopup() {
       document.getElementById("seasonPopup").style.display = "none";
     }
+    
     function confirmAddSeason() {
       const count = parseInt(document.getElementById("popupEpisodeCount").value, 10);
       if (!isNaN(count) && count > 0 && currentShowIndexForSeason !== null) {
