@@ -58,7 +58,7 @@
       padding: 15px;
       margin: 10px 0;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
     .show-header {
       display: flex;
@@ -92,7 +92,7 @@
       transition: max-height 0.5s ease;
     }
     .show-details.expanded {
-      max-height: 1000px; /* large enough to hold content */
+      max-height: 1000px;
     }
     /* Season Styles */
     .season {
@@ -114,7 +114,7 @@
       cursor: pointer;
       color: #e74c3c;
     }
-    /* Episodes */
+    /* Episode Styles */
     .episode {
       display: inline-block;
       background: #ff7b00;
@@ -151,6 +151,8 @@
       color: #fff;
     }
   </style>
+  <!-- AWS Amplify from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/aws-amplify/dist/aws-amplify.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -178,16 +180,54 @@
   </div>
   
   <script>
+    // --- AWS Amplify Configuration ---
+    // Replace with your actual S3 bucket details.
+    Amplify.configure({
+      Storage: {
+        AWSS3: {
+          bucket: "show-tracker",   // e.g., "my-show-tracker-bucket"
+          region: "us-east-2"    // e.g., "us-east-1"
+        }
+      }
+    });
+    
+    // --- Data Persistence Setup ---
+    // Load shows from localStorage or initialize an empty array.
     let shows = JSON.parse(localStorage.getItem("showTracker")) || [];
-    // Ensure each show has an "expanded" property
+    // Ensure each show has an "expanded" property.
     shows = shows.map(show => ({ ...show, expanded: show.expanded || false }));
     let currentShowIndexForSeason = null;
     
+    // Save shows locally and upload to S3.
     function saveShows() {
       localStorage.setItem("showTracker", JSON.stringify(shows));
+      uploadShowData(shows);
     }
     
-    // Render all shows
+    // Upload show data to S3 as "shows.json"
+    function uploadShowData(data) {
+      Amplify.Storage.put("shows.json", JSON.stringify(data), {
+        contentType: "application/json"
+      })
+      .then(() => console.log("Data uploaded to S3"))
+      .catch(err => console.error("Upload error:", err));
+    }
+    
+    // Load show data from S3 and update the UI.
+    function loadShowsFromCloud() {
+      Amplify.Storage.get("shows.json", { download: true })
+      .then(result => result.Body.text())
+      .then(text => {
+        shows = JSON.parse(text);
+        renderShows();
+      })
+      .catch(err => {
+        console.error("Load error:", err);
+        renderShows(); // fallback to local data if cloud load fails
+      });
+    }
+    
+    // --- UI Rendering Functions ---
     function renderShows() {
       const showsContainer = document.getElementById("shows");
       showsContainer.innerHTML = "";
@@ -196,9 +236,9 @@
         showDiv.classList.add("show-card");
         showDiv.innerHTML = `
           <div class="show-header">
-            <button class="add-season-btn" onclick="openSeasonPopup(${index}); event.stopPropagation();">+</button>
+            <button class="add-season-btn btn-secondary" onclick="openSeasonPopup(${index}); event.stopPropagation();">+</button>
             <h2 onclick="toggleShow(${index})">${show.name}</h2>
-            <button class="delete-show-btn" onclick="deleteShow(${index}); event.stopPropagation();">🗑️</button>
+            <button class="delete-show-btn btn-danger" onclick="deleteShow(${index}); event.stopPropagation();">🗑️</button>
           </div>
           <div id="show-details-${index}" class="show-details ${show.expanded ? 'expanded' : ''}">
             <div id="seasons-${index}"></div>
@@ -209,7 +249,6 @@
       });
     }
     
-    // Render seasons for a show
     function renderSeasons(showIndex) {
       const seasonsContainer = document.getElementById(`seasons-${showIndex}`);
       seasonsContainer.innerHTML = "";
@@ -219,7 +258,7 @@
         seasonDiv.innerHTML = `
           <div class="season-header">
             <strong>Season ${sIndex + 1}</strong>
-            <button class="delete-season-btn" onclick="deleteSeason(${showIndex}, ${sIndex}); event.stopPropagation();">🗑️</button>
+            <button class="delete-season-btn btn-danger" onclick="deleteSeason(${showIndex}, ${sIndex}); event.stopPropagation();">🗑️</button>
           </div>
           <div id="episodes-${showIndex}-${sIndex}"></div>
         `;
@@ -228,7 +267,6 @@
       });
     }
     
-    // Render episodes for a season
     function renderEpisodes(showIndex, seasonIndex) {
       const episodesContainer = document.getElementById(`episodes-${showIndex}-${seasonIndex}`);
       episodesContainer.innerHTML = "";
@@ -245,7 +283,7 @@
       });
     }
     
-    // Toggle an episode's watched status
+    // --- Interaction Functions ---
     function toggleEpisode(showIndex, seasonIndex, episodeIndex) {
       shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched =
         !shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched;
@@ -253,7 +291,6 @@
       renderEpisodes(showIndex, seasonIndex);
     }
     
-    // Toggle show expansion with animation
     function toggleShow(index) {
       const details = document.getElementById(`show-details-${index}`);
       shows[index].expanded = !shows[index].expanded;
@@ -265,7 +302,19 @@
       saveShows();
     }
     
-    // Popup functions for adding a show
+    function deleteShow(showIndex) {
+      shows.splice(showIndex, 1);
+      saveShows();
+      renderShows();
+    }
+    
+    function deleteSeason(showIndex, seasonIndex) {
+      shows[showIndex].seasons.splice(seasonIndex, 1);
+      saveShows();
+      renderShows();
+    }
+    
+    // --- Popup Functions for Adding Shows & Seasons ---
     function openShowPopup() {
       document.getElementById("showPopup").style.display = "block";
     }
@@ -283,7 +332,6 @@
       }
     }
     
-    // Popup functions for adding a season
     function openSeasonPopup(showIndex) {
       currentShowIndexForSeason = showIndex;
       document.getElementById("seasonPopup").style.display = "block";
@@ -303,19 +351,8 @@
       }
     }
     
-    // Delete functions
-    function deleteShow(showIndex) {
-      shows.splice(showIndex, 1);
-      saveShows();
-      renderShows();
-    }
-    function deleteSeason(showIndex, seasonIndex) {
-      shows[showIndex].seasons.splice(seasonIndex, 1);
-      saveShows();
-      renderShows();
-    }
-    
-    renderShows();
+    // --- Initialize App ---
+    loadShowsFromCloud();
   </script>
 </body>
 </html>
