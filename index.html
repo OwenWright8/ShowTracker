@@ -1,175 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show Tracker</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #1e1e2e;
-            color: #ffffff;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #2a2a3c;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        input {
-            padding: 10px;
-            margin: 10px;
-            width: 60%;
-            border: none;
-            border-radius: 5px;
-            background: #3a3a4d;
-            color: #ffffff;
-        }
-        button {
-            padding: 10px 15px;
-            margin: 5px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .btn-primary { background: #ff7b00; }
-        .btn-primary:hover { background: #cc6300; }
-        .btn-secondary { background: #00bfa6; }
-        .btn-secondary:hover { background: #008f7a; }
-        .toggle-btn {
-            background: #555;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: inline-block;
-            margin-left: 10px;
-        }
-        .show-card {
-            background: #33334d;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
-        }
-        .season, .episodes {
-            margin-top: 10px;
-            padding: 10px;
-            background: #44445e;
-            border-radius: 5px;
-            display: none;
-        }
-        .episode {
-            display: inline-block;
-            margin: 5px;
-            padding: 8px 12px;
-            background: #ff7b00;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .episode:hover {
-            background: #cc6300;
-        }
-        .watched {
-            background: #00bfa6;
-        }
-        .watched:hover {
-            background: #008f7a;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Show Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e2e;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #2a2a3c;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .btn-primary { background: #ff7b00; color: #fff; }
+    .btn-primary:hover { background: #cc6300; }
+    .btn-secondary { background: #00bfa6; color: #fff; }
+    .btn-secondary:hover { background: #008f7a; }
+    .show-card {
+      background: #33334d;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .show-header {
+      cursor: pointer;
+    }
+    .show-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+    .show-details.expanded {
+      max-height: 1000px; /* Large enough to contain the content */
+    }
+    .season {
+      background: #44445e;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      text-align: left;
+    }
+    .episode {
+      display: inline-block;
+      background: #ff7b00;
+      color: #fff;
+      padding: 5px 10px;
+      margin: 5px;
+      border-radius: 5px;
+    }
+    .custom-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #2a2a3c;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+    input[type="text"],
+    input[type="number"] {
+      padding: 10px;
+      margin: 10px;
+      width: 80%;
+      border: none;
+      border-radius: 5px;
+      background: #3a3a4d;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📺 Show Tracker</h1>
-        <input type="text" id="showName" placeholder="Enter show name">
-        <button class="btn-primary" onclick="addShow()">Add Show</button>
-        <div id="shows"></div>
-    </div>
+  <div class="container">
+    <h1>📺 Show Tracker</h1>
+    <button class="btn-primary" onclick="openShowPopup()">Add Show</button>
+    <div id="shows"></div>
+  </div>
+  
+  <!-- Show Popup -->
+  <div class="custom-popup" id="showPopup">
+    <h2>Enter Show Name</h2>
+    <input type="text" id="popupShowName" placeholder="Show name" />
+    <br />
+    <button class="btn-secondary" onclick="addShow()">Add</button>
+    <button class="btn-primary" onclick="closeShowPopup()">Cancel</button>
+  </div>
+  
+  <!-- Season Popup -->
+  <div class="custom-popup" id="seasonPopup">
+    <h2>Enter Number of Episodes</h2>
+    <input type="number" id="popupEpisodeCount" min="1" placeholder="Number of episodes" />
+    <br />
+    <button class="btn-secondary" onclick="addSeason()">Add</button>
+    <button class="btn-primary" onclick="closeSeasonPopup()">Cancel</button>
+  </div>
+  
+  <script>
+    // Retrieve shows from localStorage or initialize as empty array
+    let shows = JSON.parse(localStorage.getItem("showTracker")) || [];
+    let currentShowIndexForSeason = null;
     
-    <script>
-        let shows = JSON.parse(localStorage.getItem("showTracker")) || [];
-        function saveShows() {
-            localStorage.setItem("showTracker", JSON.stringify(shows));
-        }
-        function renderShows() {
-            const showContainer = document.getElementById("shows");
-            showContainer.innerHTML = "";
-            shows.forEach((show, showIndex) => {
-                const showDiv = document.createElement("div");
-                showDiv.classList.add("show-card");
-                showDiv.innerHTML = `<h2>${show.name} <span class="toggle-btn" onclick="toggleElement('show-${showIndex}')">▼</span></h2>
-                    <div id="show-${showIndex}" style="display: none;">
-                        <button class="btn-secondary" onclick="addSeason(${showIndex})">Add Season</button>
-                        <div id="seasons-${showIndex}"></div>
-                    </div>`;
-                
-                showContainer.appendChild(showDiv);
-                renderSeasons(showIndex);
-            });
-        }
-        function renderSeasons(showIndex) {
-            const seasonsContainer = document.getElementById(`seasons-${showIndex}`);
-            seasonsContainer.innerHTML = "";
-            shows[showIndex].seasons.forEach((season, seasonIndex) => {
-                const seasonDiv = document.createElement("div");
-                seasonDiv.classList.add("season");
-                seasonDiv.innerHTML = `<h3>Season ${seasonIndex + 1} <span class="toggle-btn" onclick="toggleElement('season-${showIndex}-${seasonIndex}')">▼</span></h3>
-                    <div id="season-${showIndex}-${seasonIndex}" style="display: none;"></div>`;
-                seasonsContainer.appendChild(seasonDiv);
-                renderEpisodes(showIndex, seasonIndex);
-            });
-        }
-        function renderEpisodes(showIndex, seasonIndex) {
-            const episodesContainer = document.getElementById(`season-${showIndex}-${seasonIndex}`);
-            episodesContainer.innerHTML = "";
-            shows[showIndex].seasons[seasonIndex].episodes.forEach((episode, episodeIndex) => {
-                const episodeBtn = document.createElement("div");
-                episodeBtn.classList.add("episode");
-                if (episode.watched) episodeBtn.classList.add("watched");
-                episodeBtn.innerText = `Ep ${episodeIndex + 1}`;
-                episodeBtn.onclick = function () { toggleEpisode(showIndex, seasonIndex, episodeIndex); };
-                episodesContainer.appendChild(episodeBtn);
-            });
-        }
-        function toggleElement(id) {
-            const element = document.getElementById(id);
-            if (element) {
-                element.style.display = element.style.display === "none" ? "block" : "none";
-            }
-        }
-        function addShow() {
-            const showName = document.getElementById("showName").value.trim();
-            if (showName) {
-                shows.push({ name: showName, seasons: [] });
-                saveShows();
-                renderShows();
-                document.getElementById("showName").value = "";
-            }
-        }
-        function addSeason(showIndex) {
-            const episodeCount = parseInt(prompt("How many episodes are in this season?"), 10);
-            if (!isNaN(episodeCount) && episodeCount > 0) {
-                const episodes = Array.from({ length: episodeCount }, () => ({ watched: false }));
-                shows[showIndex].seasons.push({ episodes });
-                saveShows();
-                renderSeasons(showIndex);
-            }
-        }
-        function toggleEpisode(showIndex, seasonIndex, episodeIndex) {
-            shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched = 
-                !shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched;
-            saveShows();
-            renderEpisodes(showIndex, seasonIndex);
-        }
+    function saveShows() {
+      localStorage.setItem("showTracker", JSON.stringify(shows));
+    }
+    
+    function renderShows() {
+      const showsContainer = document.getElementById("shows");
+      showsContainer.innerHTML = "";
+      shows.forEach((show, index) => {
+        const showDiv = document.createElement("div");
+        showDiv.classList.add("show-card");
+        showDiv.innerHTML = `
+          <div class="show-header" onclick="toggleShow(${index})">
+            <h2 style="display:inline;">${show.name}</h2>
+            <span id="arrow-${index}">▼</span>
+          </div>
+          <div id="show-details-${index}" class="show-details">
+            <button class="btn-secondary" onclick="openSeasonPopup(${index}); event.stopPropagation();">Add Season</button>
+            <div id="seasons-${index}"></div>
+          </div>
+        `;
+        showsContainer.appendChild(showDiv);
+        renderSeasons(index);
+      });
+    }
+    
+    function renderSeasons(showIndex) {
+      const seasonsContainer = document.getElementById(`seasons-${showIndex}`);
+      seasonsContainer.innerHTML = "";
+      const show = shows[showIndex];
+      show.seasons.forEach((season, sIndex) => {
+        const seasonDiv = document.createElement("div");
+        seasonDiv.classList.add("season");
+        seasonDiv.innerHTML = `<strong>Season ${sIndex + 1}</strong><br>`;
+        season.episodes.forEach((episode, eIndex) => {
+          seasonDiv.innerHTML += `<span class="episode">Ep ${eIndex + 1}</span>`;
+        });
+        seasonsContainer.appendChild(seasonDiv);
+      });
+    }
+    
+    function toggleShow(index) {
+      const details = document.getElementById(`show-details-${index}`);
+      const arrow = document.getElementById(`arrow-${index}`);
+      if (details.classList.contains("expanded")) {
+        details.classList.remove("expanded");
+        arrow.innerText = "▼";
+      } else {
+        details.classList.add("expanded");
+        arrow.innerText = "▲";
+      }
+    }
+    
+    // Show Popup functions
+    function openShowPopup() {
+      document.getElementById("showPopup").style.display = "block";
+    }
+    function closeShowPopup() {
+      document.getElementById("showPopup").style.display = "none";
+    }
+    function addShow() {
+      const name = document.getElementById("popupShowName").value.trim();
+      if (name) {
+        shows.push({ name: name, seasons: [] });
+        saveShows();
         renderShows();
-    </script>
+        closeShowPopup();
+        document.getElementById("popupShowName").value = "";
+      }
+    }
+    
+    // Season Popup functions
+    function openSeasonPopup(showIndex) {
+      currentShowIndexForSeason = showIndex;
+      document.getElementById("seasonPopup").style.display = "block";
+    }
+    function closeSeasonPopup() {
+      document.getElementById("seasonPopup").style.display = "none";
+    }
+    function addSeason() {
+      const count = parseInt(document.getElementById("popupEpisodeCount").value, 10);
+      if (!isNaN(count) && count > 0 && currentShowIndexForSeason !== null) {
+        const episodes = Array.from({ length: count }, () => ({ watched: false }));
+        shows[currentShowIndexForSeason].seasons.push({ episodes: episodes });
+        saveShows();
+        renderShows();
+        closeSeasonPopup();
+        document.getElementById("popupEpisodeCount").value = "";
+      }
+    }
+    
+    renderShows();
+  </script>
 </body>
 </html>
