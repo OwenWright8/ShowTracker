@@ -6,25 +6,28 @@
     <title>Show Tracker</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            font-family: 'Arial', sans-serif;
+            background-color: #1e1e2e;
+            color: #ffffff;
             padding: 20px;
             text-align: center;
         }
         .container {
             max-width: 600px;
             margin: auto;
-            background: white;
+            background: #2a2a3c;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
         }
         input {
             padding: 10px;
             margin: 10px;
             width: 60%;
-            border: 1px solid #ccc;
+            border: none;
             border-radius: 5px;
+            background: #3a3a4d;
+            color: #ffffff;
         }
         button {
             padding: 10px 15px;
@@ -34,39 +37,58 @@
             cursor: pointer;
             color: white;
             font-weight: bold;
+            transition: 0.3s;
         }
-        .btn-primary { background: #007bff; }
-        .btn-secondary { background: #28a745; }
+        .btn-primary { background: #ff7b00; }
+        .btn-primary:hover { background: #cc6300; }
+        .btn-secondary { background: #00bfa6; }
+        .btn-secondary:hover { background: #008f7a; }
+        .toggle-btn {
+            background: #555;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin-left: 10px;
+        }
         .show-card {
-            background: #fff;
+            background: #33334d;
             padding: 15px;
             margin: 10px 0;
-            border-radius: 8px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
         }
-        .season {
+        .season, .episodes {
             margin-top: 10px;
             padding: 10px;
-            background: #f8f9fa;
+            background: #44445e;
             border-radius: 5px;
+            display: none;
         }
         .episode {
             display: inline-block;
             margin: 5px;
-            padding: 5px 10px;
-            background: #007bff;
+            padding: 8px 12px;
+            background: #ff7b00;
             color: white;
             border-radius: 5px;
             cursor: pointer;
+            transition: 0.3s;
+        }
+        .episode:hover {
+            background: #cc6300;
         }
         .watched {
-            background: #28a745;
+            background: #00bfa6;
+        }
+        .watched:hover {
+            background: #008f7a;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Show Tracker</h1>
+        <h1>📺 Show Tracker</h1>
         <input type="text" id="showName" placeholder="Enter show name">
         <button class="btn-primary" onclick="addShow()">Add Show</button>
         <div id="shows"></div>
@@ -83,25 +105,45 @@
             shows.forEach((show, showIndex) => {
                 const showDiv = document.createElement("div");
                 showDiv.classList.add("show-card");
-                showDiv.innerHTML = `<h2>${show.name}</h2>
-                    <button class="btn-secondary" onclick="addSeason(${showIndex})">Add Season</button>`;
+                showDiv.innerHTML = `<h2>${show.name} <span class="toggle-btn" onclick="toggleElement('show-${showIndex}')">▼</span></h2>
+                    <div id="show-${showIndex}" style="display: none;">
+                        <button class="btn-secondary" onclick="addSeason(${showIndex})">Add Season</button>
+                        <div id="seasons-${showIndex}"></div>
+                    </div>`;
                 
-                show.seasons.forEach((season, seasonIndex) => {
-                    const seasonDiv = document.createElement("div");
-                    seasonDiv.classList.add("season");
-                    seasonDiv.innerHTML = `<h3>Season ${seasonIndex + 1}</h3>`;
-                    season.episodes.forEach((episode, episodeIndex) => {
-                        const episodeBtn = document.createElement("div");
-                        episodeBtn.classList.add("episode");
-                        if (episode.watched) episodeBtn.classList.add("watched");
-                        episodeBtn.innerText = `Ep ${episodeIndex + 1}`;
-                        episodeBtn.onclick = () => toggleEpisode(showIndex, seasonIndex, episodeIndex);
-                        seasonDiv.appendChild(episodeBtn);
-                    });
-                    showDiv.appendChild(seasonDiv);
-                });
                 showContainer.appendChild(showDiv);
+                renderSeasons(showIndex);
             });
+        }
+        function renderSeasons(showIndex) {
+            const seasonsContainer = document.getElementById(`seasons-${showIndex}`);
+            seasonsContainer.innerHTML = "";
+            shows[showIndex].seasons.forEach((season, seasonIndex) => {
+                const seasonDiv = document.createElement("div");
+                seasonDiv.classList.add("season");
+                seasonDiv.innerHTML = `<h3>Season ${seasonIndex + 1} <span class="toggle-btn" onclick="toggleElement('season-${showIndex}-${seasonIndex}')">▼</span></h3>
+                    <div id="season-${showIndex}-${seasonIndex}" style="display: none;"></div>`;
+                seasonsContainer.appendChild(seasonDiv);
+                renderEpisodes(showIndex, seasonIndex);
+            });
+        }
+        function renderEpisodes(showIndex, seasonIndex) {
+            const episodesContainer = document.getElementById(`season-${showIndex}-${seasonIndex}`);
+            episodesContainer.innerHTML = "";
+            shows[showIndex].seasons[seasonIndex].episodes.forEach((episode, episodeIndex) => {
+                const episodeBtn = document.createElement("div");
+                episodeBtn.classList.add("episode");
+                if (episode.watched) episodeBtn.classList.add("watched");
+                episodeBtn.innerText = `Ep ${episodeIndex + 1}`;
+                episodeBtn.onclick = function () { toggleEpisode(showIndex, seasonIndex, episodeIndex); };
+                episodesContainer.appendChild(episodeBtn);
+            });
+        }
+        function toggleElement(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.display = element.style.display === "none" ? "block" : "none";
+            }
         }
         function addShow() {
             const showName = document.getElementById("showName").value.trim();
@@ -118,14 +160,14 @@
                 const episodes = Array.from({ length: episodeCount }, () => ({ watched: false }));
                 shows[showIndex].seasons.push({ episodes });
                 saveShows();
-                renderShows();
+                renderSeasons(showIndex);
             }
         }
         function toggleEpisode(showIndex, seasonIndex, episodeIndex) {
             shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched = 
                 !shows[showIndex].seasons[seasonIndex].episodes[episodeIndex].watched;
             saveShows();
-            renderShows();
+            renderEpisodes(showIndex, seasonIndex);
         }
         renderShows();
     </script>
